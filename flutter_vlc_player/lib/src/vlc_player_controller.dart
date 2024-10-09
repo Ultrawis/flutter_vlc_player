@@ -72,6 +72,9 @@ class VlcPlayerController extends ValueNotifier<VlcPlayerValue> {
   /// List of onRenderer listeners
   final List<RendererCallback> _onRendererEventListeners = [];
 
+  /// List of media event listeners
+  final List<EventCallback> _onMediaEventListeners = [];
+
   bool _isDisposed = false;
 
   VlcAppLifeCycleObserver? _lifeCycleObserver;
@@ -171,6 +174,16 @@ class VlcPlayerController extends ValueNotifier<VlcPlayerValue> {
   /// Remove a previously registered closure from the list of OnRendererEvent closures
   void removeOnRendererEventListener(RendererCallback listener) {
     _onRendererEventListeners.remove(listener);
+  }
+
+  /// Register a [VlcMediaEvent] listener to be called when a media event occurs
+  void addOnMediaEventListener(EventCallback listener) {
+    _onMediaEventListeners.add(listener);
+  }
+
+  /// Remove a previously registered media event listener
+  void removeOnMediaEventListener(EventCallback listener) {
+    _onMediaEventListeners.remove(listener);
   }
 
   /// Attempts to open the given [url] and load metadata about the video.
@@ -301,6 +314,11 @@ class VlcPlayerController extends ValueNotifier<VlcPlayerValue> {
         case VlcMediaEventType.unknown:
           break;
       }
+
+      // Notify registered media event listeners
+      for (final listener in _onMediaEventListeners) {
+        listener(event);
+      }
     }
 
     void errorListener(Object obj) {
@@ -357,6 +375,7 @@ class VlcPlayerController extends ValueNotifier<VlcPlayerValue> {
     }
     _onInitListeners.clear();
     _onRendererEventListeners.clear();
+    _onMediaEventListeners.clear(); // Clear media event listeners
     _lifeCycleObserver?.dispose();
     _isDisposed = true;
     super.dispose();
@@ -989,3 +1008,4 @@ class VlcPlayerController extends ValueNotifier<VlcPlayerValue> {
 
 ///
 typedef RendererCallback = void Function(VlcRendererEventType, String, String);
+typedef EventCallback = void Function(VlcMediaEvent);
